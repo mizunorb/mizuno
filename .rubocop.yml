@@ -4,14 +4,24 @@ AllCops:
 Lint/EndAlignment:
   AlignWith: variable
 
+Metrics/AbcSize:
+  Severity: warning
+Metrics/ClassLength:
+  Severity: warning
+Metrics/CyclomaticComplexity:
+  Severity: warning
 Metrics/LineLength:
   Max: 132
 Metrics/MethodLength:
+  Severity: warning
+Metrics/PerceivedComplexity:
   Severity: warning
 
 # Rationale: allow Weirich-style blocks
 Style/BlockDelimiters:
   Enabled: false
+Style/Documentation:
+  Severity: warning
 Style/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 Style/MultilineOperationIndentation:

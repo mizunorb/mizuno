@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-raise("Mizuno only runs on JRuby.") unless (RUBY_PLATFORM =~ /java/)
+raise('Mizuno only runs on JRuby.') unless RUBY_PLATFORM =~ /java/
 
 require 'rubygems'
 require 'mizuno'
