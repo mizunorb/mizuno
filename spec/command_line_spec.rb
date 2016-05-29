@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'net/http'
 require 'childprocess'
 require 'fileutils'
@@ -102,6 +101,8 @@ describe 'daemonization' do
   let(:daemon) { MizunoRunner.new }
 
   it 'starts from a rackup file without daemonizing' do
+    skip 'takes more than 30 seconds to run'
+
     daemon.start('spec/support/success_app.ru')
     expect(daemon).to be_online
     daemon.stop

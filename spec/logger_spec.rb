@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'mizuno/logger'
 
 java_import 'java.util.Properties'
