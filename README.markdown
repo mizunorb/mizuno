@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/mizunorb/mizuno.svg?branch=master)](https://travis-ci.org/mizunorb/mizuno)
+
+## Description
+
 Mizuno is a set of Jetty-powered running shoes for JRuby/Rack.
 
 To use Mizuno with your Rack app:
