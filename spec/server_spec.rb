@@ -16,85 +16,91 @@ describe Mizuno::Server do
 
     it '200 OK' do
       response = get('/ping')
-      response.code.should eq '200'
-      response.body.should eq 'OK'
+      expect(response.code).to eq '200'
+      expect(response.body).to eq 'OK'
     end
 
     it '403 FORBIDDEN' do
       response = get('/error/403')
-      response.code.should eq '403'
+      expect(response.code).to eq '403'
     end
 
     it '404 NOT FOUND' do
       response = get('/jimmy/hoffa')
-      response.code.should eq '404'
+      expect(response.code).to eq '404'
     end
 
     it 'rack headers' do
       response = get('/echo')
-      response.code.should eq '200'
+      expect(response.code).to eq '200'
+
       content = JSON.parse(response.body)
-      content['rack.version'].should eq [1, 2]
-      content['rack.multithread'].should be_true
-      content['rack.multiprocess'].should be_false
-      content['rack.run_once'].should be_false
+      expect(content['rack.version']).to eq [1, 2]
+      expect(content['rack.multithread']).to be_true
+      expect(content['rack.multiprocess']).to be_false
+      expect(content['rack.run_once']).to be_false
     end
 
     it 'form variables via GET' do
       response = get('/echo?answer=42')
-      response.code.should eq '200'
+      expect(response.code).to eq '200'
+
       content = JSON.parse(response.body)
-      content['request.params']['answer'].should eq '42'
+      expect(content['request.params']['answer']).to eq '42'
     end
 
     it 'form variables via POST' do
       question = 'What is the answer to life?'
       response = post('/echo', 'question' => question)
-      response.code.should eq '200'
+      expect(response.code).to eq '200'
+
       content = JSON.parse(response.body)
-      content['request.params']['question'].should eq question
+      expect(content['request.params']['question']).to eq question
     end
 
     it 'custom headers' do
       response = get('/echo', 'X-My-Header' => 'Pancakes')
-      response.code.should eq '200'
+      expect(response.code).to eq '200'
+
       content = JSON.parse(response.body)
-      content['HTTP_X_MY_HEADER'].should eq 'Pancakes'
+      expect(content['HTTP_X_MY_HEADER']).to eq 'Pancakes'
     end
 
     it 'rack.java.servlet' do
       response = get('/echo', 'answer' => '42')
-      response.code.should eq '200'
+      expect(response.code).to eq '200'
+
       content = JSON.parse(response.body)
-      content['rack.java.servlet'].should be_true
+      expect(content['rack.java.servlet']).to be_true
     end
 
     it 'hides server version' do
       response = get('/ping')
-      response['server'].should be_nil
+      expect(response['server']).to be_nil
     end
 
     it 'server port and hostname' do
       response = get('/echo')
       content = JSON.parse(response.body)
-      content['SERVER_PORT'].should eq '9201'
-      content['SERVER_NAME'].should eq '127.0.0.1'
+      expect(content['SERVER_PORT']).to eq '9201'
+      expect(content['SERVER_NAME']).to eq '127.0.0.1'
     end
 
     it 'uri scheme' do
       response = get('/echo')
       content = JSON.parse(response.body)
-      content['rack.url_scheme'].should eq 'http'
+      expect(content['rack.url_scheme']).to eq 'http'
     end
 
     it 'file downloads' do
       response = get('/download')
-      response.code.should eq '200'
-      response['Content-Type'].should eq 'image/png'
-      response['Content-Disposition'].should eq \
+      expect(response.code).to eq '200'
+      expect(response['Content-Type']).to eq 'image/png'
+      expect(response['Content-Disposition']).to eq \
         'attachment; filename=reddit-icon.png'
+
       checksum = Digest::MD5.hexdigest(response.body)
-      checksum.should == '8da4b60a9bbe205d4d3699985470627e'
+      expect(checksum).to eq '8da4b60a9bbe205d4d3699985470627e'
     end
 
     it 'file uploads' do
@@ -114,8 +120,9 @@ describe Mizuno::Server do
       headers = { 'Content-Type' => \
           "multipart/form-data; boundary=#{boundary}" }
       response = post('/upload', nil, headers, body)
-      response.code.should eq '200'
-      response.body.should eq '8da4b60a9bbe205d4d3699985470627e'
+
+      expect(response.code).to eq '200'
+      expect(response.body).to eq '8da4b60a9bbe205d4d3699985470627e'
     end
 
     it 'async requests' do
@@ -134,15 +141,15 @@ describe Mizuno::Server do
         end
       end
 
-      lock.synchronize { buffer.should be_empty }
+      lock.synchronize { expect(buffer).to be_empty }
       post('/push', 'message' => 'one') && sleep(0.2)
-      lock.synchronize { buffer.count.should eq 20 }
+      lock.synchronize { expect(buffer.count).to eq 20 }
 
       post('/push', 'message' => 'two') && sleep(0.2)
-      lock.synchronize { buffer.count.should eq 40 }
+      lock.synchronize { expect(buffer.count).to eq 40 }
 
       post('/push', 'message' => 'three') && sleep(0.2)
-      lock.synchronize { buffer.count.should eq 60 }
+      lock.synchronize { expect(buffer.count).to eq 60 }
 
       post('/push', 'message' => 'eof') && sleep(0.5)
       clients.each(&:join)
@@ -159,25 +166,25 @@ describe Mizuno::Server do
         end
       end
 
-      chunks.should eq %w(one two)
-      (timings.last - timings.first).should be_within(0.01).of(0.1)
+      expect(chunks).to eq %w(one two)
+      expect(timings.last - timings.first).to be_within(0.01).of(0.1)
     end
 
     it "doesn't double-chunk content" do
       response = get('/chunked')
-      response.should be_chunked
-      response.body.should eq 'chunked'
+      expect(response).to be_chunked
+      expect(response.body).to eq 'chunked'
     end
 
     it "doesn't double-chunk rails-like content" do
       response = get('/rails_like_chunked')
-      response.should be_chunked
-      response.body.should eq 'chunked'
+      expect(response).to be_chunked
+      expect(response.body).to eq 'chunked'
     end
 
     it 'sets multiple cookies correctly' do
       response = get('/cookied')
-      response['set-cookie'].should eq 'first=one+fish, second=two+fish'
+      expect(response['set-cookie']).to eq 'first=one+fish, second=two+fish'
     end
   end
 
@@ -191,8 +198,9 @@ describe Mizuno::Server do
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     response = http.get(uri.request_uri)
-    response.should be_a(Net::HTTPOK)
-    response.body.should eq 'OK'
+
+    expect(response).to be_a Net::HTTPOK
+    expect(response.body).to eq 'OK'
     stop_server
   end
 end

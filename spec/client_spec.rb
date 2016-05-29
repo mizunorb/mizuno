@@ -11,7 +11,7 @@ describe Mizuno::Client do
       called = true
     end
     client.stop
-    called.should be_true
+    expect(called).to be_true
   end
 
   it 'makes http requests to google' do
@@ -24,7 +24,7 @@ describe Mizuno::Client do
       called = true
     end
     client.stop
-    called.should be_true
+    expect(called).to be true
   end
 
   it 'makes multiple requests' do
@@ -39,7 +39,7 @@ describe Mizuno::Client do
       queue.push(true)
     end
     client.stop
-    queue.size.should == 2
+    expect(queue.size).to eq 2
   end
 
   #
@@ -56,7 +56,7 @@ describe Mizuno::Client do
       called = true
     end
     client.stop
-    called.should be_true
+    expect(called).to be true
   end
 
   it 'has a root exchange' do
@@ -66,6 +66,6 @@ describe Mizuno::Client do
       response.should be_success
     end
     Mizuno::Client.stop
-    called.should be_true
+    expect(called).to be true
   end
 end

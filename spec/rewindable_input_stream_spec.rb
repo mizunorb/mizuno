@@ -20,8 +20,8 @@ describe RewindableInputStream do
   it 'should read data byte by byte' do
     input = 49.times.to_a
     stream = rewindable_input_stream(input.to_java(:byte), 6, 24)
-    49.times { |i| stream.read.should == i }
-    3.times { stream.read.should == -1 }
+    49.times { |i| expect(stream.read).to eq i }
+    3.times { expect(stream.read).to eq(-1) }
   end
 
   it 'should read data then rewind and read again (in memory)' do
@@ -43,23 +43,23 @@ describe RewindableInputStream do
       stream = rewindable_input_stream(input.to_java(:byte), 10, 50)
       data = new_byte_array(110)
 
-      stream.read(data, 0, 5).should eq 5
-      5.times { |i| data[i].should eq i }
+      expect(stream.read(data, 0, 5)).to eq 5
+      5.times { |i| expect(data[i]).to eq i }
 
       stream.rewind
-      stream.read(data, 5, 88).should eq 88
-      88.times { |i| data[i + 5].should eq i }
-      stream.read.should eq 88
-      stream.read.should eq 89
+      expect(stream.read(data, 5, 88)).to eq 88
+      88.times { |i| expect(data[i + 5]).to eq i }
+      expect(stream.read).to eq 88
+      expect(stream.read).to eq 89
 
       stream.rewind
-      stream.read(data, 10, 33).should eq 33
-      33.times { |i| data[i + 10].should eq i }
+      expect(stream.read(data, 10, 33)).to eq 33
+      33.times { |i| expect(data[i + 10]).to eq i }
 
       stream.rewind
-      stream.read(data, 0, 101).should eq 100
-      100.times { |i| data[i].should eq i }
-      stream.read.should eq(-1)
+      expect(stream.read(data, 0, 101)).to eq 100
+      100.times { |i| expect(data[i]).to eq i }
+      expect(stream.read).to eq(-1)
     end
 
     it 'should rewind unread data' do
@@ -67,9 +67,10 @@ describe RewindableInputStream do
       stream.rewind
 
       data = new_byte_array(120)
-      stream.read(data, 10, 110).should eq 100
+      expect(stream.read(data, 10, 110)).to eq 100
+
       100.times do |i|
-        data[i + 10].should eq i
+        expect(data[i + 10]).to eq i
       end
     end
 
@@ -77,25 +78,25 @@ describe RewindableInputStream do
       stream = rewindable_input_stream(input.to_java(:byte), 5, 20)
 
       15.times { stream.read }
-      stream.markSupported.should eq true
+      expect(stream.mark_supported).to eq true
       stream.mark(50)
 
-      35.times { |i| stream.read.should eq 15 + i }
+      35.times { |i| expect(stream.read).to eq 15 + i }
 
       stream.reset
 
-      50.times { |i| stream.read.should eq 15 + i }
-      35.times { |i| stream.read.should eq 65 + i }
+      50.times { |i| expect(stream.read).to eq 15 + i }
+      35.times { |i| expect(stream.read).to eq 65 + i }
 
-      stream.read.should eq(-1)
+      expect(stream.read).to eq(-1)
     end
   end
 
   it 'should read data then rewind and read again (server)' do
     body = 'Mizuno is a set of Jetty-powered running shoes for JRuby/Rack.'
     response = post('/repeat_body', nil, {}, body)
-    response.code.should eq '200'
-    response.body.should eq body * 2
+    expect(response.code).to eq '200'
+    expect(response.body).to eq body * 2
   end
 
   def rewindable_input_stream(input, buffer_size = nil, max_buffer_size = nil)
@@ -120,21 +121,21 @@ describe RewindableInputStream do
 
     # read 7 bytes
     data = new_byte_array(7)
-    stream.read(data, 0, 7).should eq 7
-    7.times { |i| data[i].should eq i }
+    expect(stream.read(data, 0, 7)).to eq 7
+    7.times { |i| expect(data[i]).to eq i }
 
     # read 20 bytes
     data = new_byte_array(42)
-    stream.read(data, 10, 20).should eq 20
-    10.times { |i| data[i].should eq 0 }
-    20.times { |i| data[i + 10].should eq i + 7 }
-    10.times { |i| data[i + 30].should eq 0 }
+    expect(stream.read(data, 10, 20)).to eq 20
+    10.times { |i| expect(data[i]).to eq 0 }
+    20.times { |i| expect(data[i + 10]).to eq i + 7 }
+    10.times { |i| expect(data[i + 30]).to eq 0 }
 
     # read 100 bytes
     data = new_byte_array(200)
-    stream.read(data, 0, 200).should eq 100
-    100.times { |i| data[i].should eq i + 20 + 7 }
-    100.times { |i| data[i + 100].should eq 0 }
+    expect(stream.read(data, 0, 200)).to eq 100
+    100.times { |i| expect(data[i]).to eq i + 20 + 7 }
+    100.times { |i| expect(data[i + 100]).to eq 0 }
 
     stream
   end
