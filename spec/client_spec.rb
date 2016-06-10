@@ -11,10 +11,10 @@ describe Mizuno::Client do
       called = true
     end
     client.stop
-    expect(called).to be_true
+    expect(called).to be true
   end
 
-  it 'makes http requests to google' do
+  pending 'makes http requests to google' do
     called = false
     client = Mizuno::Client.new(timeout: 30)
     client.request('http://google.com/') do |response|
@@ -27,7 +27,7 @@ describe Mizuno::Client do
     expect(called).to be true
   end
 
-  it 'makes multiple requests' do
+  pending 'makes multiple requests' do
     queue = Queue.new
     client = Mizuno::Client.new(timeout: 30)
     client.request('http://google.com/') do |response|
@@ -59,7 +59,7 @@ describe Mizuno::Client do
     expect(called).to be true
   end
 
-  it 'has a root exchange' do
+  pending 'has a root exchange' do
     called = false
     Mizuno::Client.request('http://google.com/') do |response|
       called = true
