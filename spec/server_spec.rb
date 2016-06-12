@@ -1,5 +1,7 @@
-require 'support/test_app'
 require 'net/http'
+require 'openssl'
+
+require 'support/test_app'
 
 describe Mizuno::Server do
   include HttpRequests
@@ -35,10 +37,10 @@ describe Mizuno::Server do
       expect(response.code).to eq '200'
 
       content = JSON.parse(response.body)
-      expect(content['rack.version']).to eq [1, 2]
-      expect(content['rack.multithread']).to be_true
-      expect(content['rack.multiprocess']).to be_false
-      expect(content['rack.run_once']).to be_false
+      expect(content['rack.version']).to eq [1, 3]
+      expect(content['rack.multithread']).to be true
+      expect(content['rack.multiprocess']).to be false
+      expect(content['rack.run_once']).to be false
     end
 
     it 'form variables via GET' do
@@ -71,7 +73,7 @@ describe Mizuno::Server do
       expect(response.code).to eq '200'
 
       content = JSON.parse(response.body)
-      expect(content['rack.java.servlet']).to be_true
+      expect(content['rack.java.servlet']).to be true
     end
 
     it 'hides server version' do
