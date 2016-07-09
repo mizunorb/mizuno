@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/mizunorb/mizuno.svg?branch=master)](https://travis-ci.org/mizunorb/mizuno)
+[![Code Climate](https://codeclimate.com/github/mizunorb/mizuno/badges/gpa.svg)](https://codeclimate.com/github/mizunorb/mizuno)
 
 ## Description
 
