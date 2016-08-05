@@ -27,10 +27,10 @@ Gem::Specification.new do |spec|
   spec.has_rdoc = false
   spec.require_paths = ['lib']
   spec.rubygems_version = '1.3.6'
-  spec.add_dependency('rack', '>= 1.0.0')
-  spec.add_dependency('ffi', '>= 1.0.0')
-  spec.add_dependency('choice', '>= 0.1.0')
   spec.add_dependency('childprocess', '>= 0.2.6')
+  spec.add_dependency('choice', '>= 0.1.0')
+  spec.add_dependency('ffi', '>= 1.0.0')
+  spec.add_dependency('rack', '>= 1.0.0')
   spec.add_development_dependency('json_pure', '>= 1.6.0')
   spec.add_development_dependency('nokogiri')
   spec.add_development_dependency('rake')
