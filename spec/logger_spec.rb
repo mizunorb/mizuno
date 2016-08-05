@@ -5,12 +5,12 @@ java_import 'java.util.Properties'
 describe Mizuno::Logger do
   context 'when writing logs to a file' do
     LOGFILE = File.join(File.dirname(__FILE__), '../tmp/logger.log')
-    let(:logger) { Mizuno::Logger.logger }
+    let(:logger) { described_class.logger }
     let(:content) { File.read(LOGFILE).lines.to_a }
 
     before(:all) {
       FileUtils.rm(LOGFILE) if File.exist?(LOGFILE)
-      Mizuno::Logger.configure(log: LOGFILE, debug: true)
+      #described_class.configure(log: LOGFILE, debug: true)
     }
 
     describe '#debug' do

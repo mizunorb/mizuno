@@ -1,5 +1,4 @@
 require 'java'
-require 'lib/java/servlet-api-3.0.jar'
 require 'lib/java/rewindable-input-stream.jar'
 require 'support/test_app'
 

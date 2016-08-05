@@ -105,7 +105,6 @@ module Mizuno
 
     def self.start(options)
       Dir.chdir(options[:root])
-      Logger.configure(options)
       ENV['RACK_ENV'] = options[:env]
       server = Rack::Server.new
       server.options = options.merge(server: 'mizuno',

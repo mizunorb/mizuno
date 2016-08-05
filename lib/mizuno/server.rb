@@ -4,9 +4,9 @@
 require 'rack'
 require 'rack/rewindable_input'
 require 'mizuno'
-Mizuno.require_jars(%w(jetty-continuation jetty-http jetty-io jetty-jmx
-                       jetty-security jetty-server jetty-util servlet-api
-                       rewindable-input-stream))
+require 'rjack-jetty'
+Mizuno.require_jars 'rewindable-input-stream'
+
 require 'mizuno/version'
 require 'mizuno/rack/chunked'
 require 'mizuno/rack_handler'
@@ -15,12 +15,11 @@ require 'mizuno/reloader'
 
 module Mizuno
   class Server
-    java_import 'org.eclipse.jetty.server.nio.SelectChannelConnector'
+    java_import 'org.eclipse.jetty.server.HttpConfiguration'
+    java_import 'org.eclipse.jetty.server.HttpConnectionFactory'
+    java_import 'org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector'
     java_import 'org.eclipse.jetty.util.thread.QueuedThreadPool'
     java_import 'org.jruby.rack.servlet.RewindableInputStream'
-    java_import 'org.eclipse.jetty.server.ssl.SslSelectChannelConnector'
-
-    attr_accessor :logger
 
     @lock ||= Mutex.new
 
@@ -44,6 +43,10 @@ module Mizuno
       Logger.logger
     end
 
+    def logger
+      self.class.logger
+    end
+
     #
     # Start up an instance of Jetty, running a Rack application.
     # Options can be any of the follwing, and are not
@@ -59,37 +62,34 @@ module Mizuno
     #
     def run(app, options = {})
       # Symbolize and downcase keys.
-      @options = options = Hash[options.map { |k, v|
-                                  [k.to_s.downcase.to_sym, v]
-                                }]
+      @options = options = Hash[
+        options.map { |k, v|
+          [
+            k.to_s.downcase.to_sym, v
+          ]
+        }
+      ]
       options[:quiet] ||= true if options[:embedded]
-
-      # The Jetty server
-      Logger.configure(options)
-      @logger = Logger.logger
-      @server = Java.org.eclipse.jetty.server.Server.new
-      @server.setSendServerVersion(false)
 
       # Thread pool
       threads = options[:threads] || 50
       thread_pool = QueuedThreadPool.new
-      thread_pool.min_threads = options.fetch(:min_threads,
-                                              [threads.to_i / 10, 5].max)
+      thread_pool.min_threads = [threads.to_i / 10, 5].max
       thread_pool.max_threads = [threads.to_i, 10].max
-      @server.set_thread_pool(thread_pool)
+
+      # The Jetty server
+      @server = Java.org.eclipse.jetty.server.Server.new(thread_pool)
+
+      # HTTP Configuration
+      http_config = HttpConfiguration.new
+      http_config.setSendServerVersion(false)
 
       # Connector
-      connector = SelectChannelConnector.new
-      connector.setReuseAddress(options.fetch(:reuse_address, false))
+      connector = NetworkTrafficSelectChannelConnector.new(@server, HttpConnectionFactory.new(http_config))
       connector.setPort(options[:port].to_i)
       connector.setHost(options[:host])
-      max_header_size = options.fetch(:max_header_size, 32_768)
-      connector.setRequestHeaderSize(max_header_size)
 
       @server.addConnector(connector)
-
-      # SSL Connector
-      configure_https(options) if options[:ssl_port]
 
       # Switch to a different user or group if we were asked to.
       Runner.setgid(options) if options[:group]
@@ -98,7 +98,7 @@ module Mizuno
       # Optionally wrap with Mizuno::Reloader.
       threshold = (ENV['RACK_ENV'] == 'production' ? 10 : 1)
       app = Mizuno::Reloader.new(app, threshold) \
-          if options[:reloadable]
+         if options[:reloadable]
 
       # The servlet itself.
       rack_handler = RackHandler.new(self)
@@ -108,13 +108,13 @@ module Mizuno
       @server.set_handler(rack_handler)
       @server.start
       $stderr.printf("%s listening on %s:%s\n", version,
-                     connector.host, connector.port) unless options[:quiet]
+        connector.host, connector.port) unless options[:quiet]
 
       # If we're embedded, we're done.
       return if options[:embedded]
 
       # Stop the server when we get The Signal.
-      trap('SIGTERM') { @server.stop && exit }
+      trap('SIGINT') { @server.stop && exit }
 
       # Join with the server thread, so that currently open file
       # descriptors don't get closed by accident.

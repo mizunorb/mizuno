@@ -2,9 +2,7 @@ require 'logger'
 
 module Mizuno
   class Logger < ::Logger
-    java_import 'java.io.ByteArrayInputStream'
-    java_import 'java.util.Properties'
-    java_import 'org.apache.log4j.PropertyConfigurator'
+    Mizuno.require_jars(%w(log4j slf4j-api slf4j-log4j12))
 
     LEVELS = {
       ::Logger::DEBUG => Java.org.apache.log4j.Level::DEBUG,
@@ -14,18 +12,18 @@ module Mizuno
       ::Logger::FATAL => Java.org.apache.log4j.Level::FATAL
     }.freeze
 
-    #
-    # Configure Log4J.
-    #
-    def self.configure(options = {})
-      return if @options
-      @options = options
+    def self.log_options
+      Mizuno.log_options
+    end
+
+    def self.initialize_logging
+      import_logging_classes
 
       # Default logging threshold.
-      limit = options[:warn] ? 'WARN' : 'ERROR'
-      limit = 'DEBUG' if $DEBUG || options[:debug]
+      limit = log_options[:warn] ? 'WARN' : 'ERROR'
+      limit = 'DEBUG' if $DEBUG || log_options[:debug]
 
-      unless options[:log4j]
+      unless log_options[:log4j]
         # Base logging configuration.
         config = <<-END
                   log4j.rootCategory = #{limit}, default
@@ -35,16 +33,16 @@ module Mizuno
               END
 
         # Should we log to the console?
-        config.concat(<<-END) unless options[:log]
+        config.concat(<<-END) unless log_options[:log]
                   log4j.appender.default = org.apache.log4j.ConsoleAppender
                   log4j.appender.default.layout.ConversionPattern = %m\\n
               END
 
         # Are we logging to a file?
-        config.concat(<<-END) if options[:log]
+        config.concat(<<-END) if log_options[:log]
                   log4j.appender.default = org.apache.log4j.FileAppender
                   log4j.appender.default.Append = true
-                  log4j.appender.default.File = #{options[:log]}
+                  log4j.appender.default.File = #{log_options[:log]}
                   log4j.appender.default.layout.ConversionPattern = %d %p %m\\n
               END
 
@@ -53,13 +51,18 @@ module Mizuno
         properties.load(ByteArrayInputStream.new(config.to_java_bytes))
         PropertyConfigurator.configure(properties)
       end
-
-      # Create the default logger that gets used everywhere.
-      @logger = new
     end
 
-    class << self
-      attr_reader :logger
+    private_class_method
+
+    def self.import_logging_classes
+      java_import 'java.io.ByteArrayInputStream'
+      java_import 'java.util.Properties'
+      java_import 'org.apache.log4j.PropertyConfigurator'
+    end
+
+    def self.logger
+      @logger ||= new
     end
 
     def initialize

@@ -12,16 +12,10 @@ module Mizuno
 
   HOME = File.expand_path(File.dirname(__FILE__))
 
-  #
-  # Tell log4j not to complain to the console about a missing
-  # log4j.properties file, as we configure it programmatically in
-  # Mizuno::Server (http://stackoverflow.com/questions/6849887)
-  #
-  def self.initialize_logger
-    require_jars(%w(log4j slf4j-api slf4j-log4j12))
-    Java.org.apache.log4j.Logger.getRootLogger.setLevel( \
-      Java.org.apache.log4j.Level::INFO
-    )
+  @log_options = {}
+
+  class << self
+    attr_accessor :log_options
   end
 
   #
@@ -37,4 +31,8 @@ module Mizuno
   end
 end
 
-Mizuno.initialize_logger
+# The logging must be set up before rjack-jetty gets loaded, since it loads jetty-util which in turns expect log4j to
+# already be configured. We _could_ solve it all by switching to rjack-logback (which uses the Logback library, which
+# supersedes log4j), but it requires more substantial changes at our end.
+require 'mizuno/logger'
+Mizuno::Logger.initialize_logging

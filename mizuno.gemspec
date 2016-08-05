@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency('choice', '>= 0.1.0')
   spec.add_dependency('ffi', '>= 1.0.0')
   spec.add_dependency('rack', '>= 1.0.0')
+  spec.add_dependency('rjack-jetty', '>= 9.0')
   spec.add_development_dependency('json_pure', '>= 1.6.0')
   spec.add_development_dependency('nokogiri')
   spec.add_development_dependency('rake')
