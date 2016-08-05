@@ -10,49 +10,43 @@ describe Mizuno::Logger do
 
     before(:all) {
       FileUtils.rm(LOGFILE) if File.exist?(LOGFILE)
-      #described_class.configure(log: LOGFILE, debug: true)
+      described_class.configure(log: LOGFILE, debug: true)
     }
 
     describe '#debug' do
       it 'prefixes the log message with a DEBUG prefix' do
         logger.debug('uuwaf')
-        expect(content.grep(/DEBUG uuwaf/).count).to eq 1
+        expect(content.grep(/DEBUG mizuno - uuwaf/).count).to eq 1
       end
     end
 
     describe '#error' do
       it 'prefixes the log message with a ERROR prefix' do
         logger.error('dooca')
-        expect(content.grep(/ERROR dooca/).count).to eq 1
+        expect(content.grep(/ERROR mizuno - dooca/).count).to eq 1
       end
     end
 
-    describe '#fatal' do
-      it 'prefixes the log message with a FATAL prefix' do
-        logger.fatal('einai')
-        expect(content.grep(/FATAL einai/).count).to eq 1
+    context 'when the log level is not supported' do
+      describe '#fatal' do
+        it 'raises an error' do
+          expect { logger.fatal('some random log message') }.to raise_error Mizuno::NotSupportedError
+        end
       end
     end
 
     describe '#info' do
       it 'prefixes the log message with a INFO prefix' do
         logger.info('shaeg')
-        expect(content.grep(/INFO shaeg/).count).to eq 1
+        expect(content.grep(/INFO  mizuno - shaeg/).count).to eq 1
       end
     end
 
     describe '#warn' do
       it 'prefixes the log message with a WARN prefix' do
         logger.warn('zohch')
-        expect(content.grep(/WARN zohch/).count).to eq 1
+        expect(content.grep(/WARN  mizuno - zohch/).count).to eq 1
       end
-    end
-  end
-
-  context 'when the "log4j" option is enabled' do
-    it 'does not set up the logger' do
-      expect(Properties).to_not receive(:new)
-      Mizuno::Logger.configure(log4j: true)
     end
   end
 end

@@ -1,77 +1,71 @@
 require 'logger'
+require 'rjack-logback'
+
+require 'mizuno/errors'
+
+# Hack to be be able to get the underlying Logback object from jrack-logback.
+module RJack
+  module Logback
+    class Logger
+      attr_reader :jlogger
+    end
+  end
+end
 
 module Mizuno
   class Logger < ::Logger
-    Mizuno.require_jars(%w(log4j slf4j-api slf4j-log4j12))
-
     LEVELS = {
-      ::Logger::DEBUG => Java.org.apache.log4j.Level::DEBUG,
-      ::Logger::INFO => Java.org.apache.log4j.Level::INFO,
-      ::Logger::WARN => Java.org.apache.log4j.Level::WARN,
-      ::Logger::ERROR => Java.org.apache.log4j.Level::ERROR,
-      ::Logger::FATAL => Java.org.apache.log4j.Level::FATAL
+      ::Logger::DEBUG => 'debug',
+      ::Logger::INFO => 'info',
+      ::Logger::WARN => 'warn',
+      ::Logger::ERROR => 'error'
     }.freeze
 
-    def self.log_options
-      Mizuno.log_options
+    def self.initialize_logging
+      # Jetty floods the logs with loads and loads of INFO and DEBUG messages unless we silence it like this.
+      RJack::Logback.root.level = RJack::Logback::WARN
     end
 
-    def self.initialize_logging
-      import_logging_classes
-
+    def self.configure(options = {})
       # Default logging threshold.
-      limit = log_options[:warn] ? 'WARN' : 'ERROR'
-      limit = 'DEBUG' if $DEBUG || log_options[:debug]
+      limit = options[:warn] ? ::Logger::WARN : ::Logger::ERROR
+      limit = ::Logger::DEBUG if $DEBUG || options[:debug]
+      logger.level = limit
 
-      unless log_options[:log4j]
-        # Base logging configuration.
-        config = <<-END
-                  log4j.rootCategory = #{limit}, default
-                  log4j.logger.org.eclipse.jetty.util.log = #{limit}, default
-                  log4j.appender.default.Threshold = #{limit}
-                  log4j.appender.default.layout = org.apache.log4j.PatternLayout
-              END
-
-        # Should we log to the console?
-        config.concat(<<-END) unless log_options[:log]
-                  log4j.appender.default = org.apache.log4j.ConsoleAppender
-                  log4j.appender.default.layout.ConversionPattern = %m\\n
-              END
-
-        # Are we logging to a file?
-        config.concat(<<-END) if log_options[:log]
-                  log4j.appender.default = org.apache.log4j.FileAppender
-                  log4j.appender.default.Append = true
-                  log4j.appender.default.File = #{log_options[:log]}
-                  log4j.appender.default.layout.ConversionPattern = %d %p %m\\n
-              END
-
-        # Set up Log4J via Properties.
-        properties = Properties.new
-        properties.load(ByteArrayInputStream.new(config.to_java_bytes))
-        PropertyConfigurator.configure(properties)
+      appender = if options[:log]
+        RJack::Logback::FileAppender.new(options[:log])
+      else
+        RJack::Logback::ConsoleAppender.new do |a|
+          a.target = 'System.err'
+        end
       end
+
+      # TODO: Tried to customize the pattern here, but all output to the file gets disabled if I try that. Maybe
+      # something in rjack-logback? Or perhaps in how we use it.
+
+      RJack::Logback.root.jlogger.detach_and_stop_all_appenders
+      RJack::Logback.root.add_appender(appender)
     end
 
     private_class_method
-
-    def self.import_logging_classes
-      java_import 'java.io.ByteArrayInputStream'
-      java_import 'java.util.Properties'
-      java_import 'org.apache.log4j.PropertyConfigurator'
-    end
 
     def self.logger
       @logger ||= new
     end
 
     def initialize
-      @log4j = Java.org.apache.log4j.Logger.getLogger('ruby')
+      @logback_logger = RJack::SLF4J['mizuno']
+
+      # We set this level to the most verbose, and let ourself (i.e. the ::Logger-derivative) assume responsibility for
+      # filtering of irrelevant logging.
+      RJack::Logback['mizuno'].level = RJack::Logback::DEBUG
     end
 
     def add(severity, message = nil, progname = nil)
+      raise NotSupportedError, "Severity #{severity} is not supported" unless LEVELS.key?(severity)
+
       content = (message || (block_given? && yield) || progname)
-      @log4j.log(LEVELS[severity], content)
+      @logback_logger.send(LEVELS[severity], content)
     end
 
     def puts(message)
