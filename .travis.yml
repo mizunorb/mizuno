@@ -1,9 +1,5 @@
 language: ruby
-matrix:
-  include:
-    - rvm: jruby-9.1.2
-      jdk: oraclejdk7
-    - rvm: jruby-9.1.2
-      jdk: oraclejdk8
+rvm: jruby-9.1.2.0
+jdk: oraclejdk8
 cache:
   bundler: true
